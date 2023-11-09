@@ -18,16 +18,23 @@ package object Matrices {
     v
   }
 
-  def transpuesta(m:Matriz): Matriz = {
+  def vectorAlAzar(long: Int, vals: Int): Vector[Int] = {
+    //Crear un vector de enteros de longitud long,
+    //con valores aleatorios entre 0 y vals
+    val v = Vector.fill(long){random.nextInt(vals)}
+    v
+  }
+
+  def transpuesta(m: Matriz): Matriz = {
     val l = m.length
-    Vector.tabulate(1, 1)((i, j) => (i * j))
+    Vector.tabulate(l, l)((i, j) => m(j)(i))
   }
 
   def prodPunto(v1: Vector[Int], v2: Vector[Int]): Int ={
     (v1 zip v2).map({case (i, j) => (i * j)}).sum
   }
 
-  def prodPuntoParD(v1: ParVector[Int], v2: Vector[Int]): Int ={
+  def prodPuntoParD(v1: ParVector[Int], v2: ParVector[Int]): Int ={
     // A ser usada en el punto 1.5
     (v1 zip v2).map({case (i, j) => (i * j)}).sum
   }
@@ -42,7 +49,7 @@ package object Matrices {
     // Función para calcular un elemento de la matriz resultante
     def compute(i: Int, j: Int): Int = {
       val fila = m1(i)
-      val columna = transpuesta(m2)(j)
+      val columna = m2.map(_(j))
       prodPunto(fila, columna)
     }
 
@@ -55,25 +62,24 @@ package object Matrices {
   }
 
 
-  //Ejercicio 1.1.2
-
+  //Ejercicio 1.1.2 - Versión estándar paralela
   def multMatrizPar(m1: Matriz, m2: Matriz): Matriz = {
     require(m1.length == m2.length)
 
     val n = m1.length
 
-    // Función para calcular un elemento de la matriz resultante
-    def compute(i: Int, j: Int): Int = {
+    // Función para calcular un elemento de la matriz resultante de forma paralela
+    def computePar(i: Int, j: Int): Int = {
       val fila = m1(i)
-      val columna = transpuesta(m2)(j)
+      val columna = m2.map(_(j)) // Acceder directamente a los elementos de la columna
       prodPunto(fila, columna)
     }
 
-    // Crear una lista de tareas para los cálculos
+    // Crear una lista de tareas para los cálculos paralelos
     val tareas = (0 until n).flatMap { i =>
       (0 until n).map { j =>
         task {
-          compute(i, j)
+          computePar(i, j)
         }
       }
     }
